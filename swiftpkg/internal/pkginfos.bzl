@@ -768,18 +768,23 @@ def _new_swift_src_info_from_sources(
         if has_objc_directive:
             break
 
+    target_exclude_paths = [
+        paths.normalize(paths.join(target_path, exclude_path))
+        for exclude_path in exclude_paths
+    ]
+
     # Find any auto-discoverable resources under the target
     all_target_files = repository_files.list_files_under(
         repository_ctx,
         target_path,
-        exclude_paths = exclude_paths,
+        exclude_paths = target_exclude_paths,
     )
 
     # Identify the directories
     directories = repository_files.list_directories_under(
         repository_ctx,
         target_path,
-        exclude_paths = exclude_paths,
+        exclude_paths = target_exclude_paths,
     )
     dirs_set = sets.make(directories)
 
