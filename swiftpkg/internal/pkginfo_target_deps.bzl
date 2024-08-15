@@ -104,8 +104,6 @@ Unrecognized target dependency while generating a Bazel dependency label.\
         else:
             labels = []
 
-        print(labels)
-
         return bzl_selects.new_from_target_dependency_condition(
             kind = _target_dep_kind,
             labels = [
