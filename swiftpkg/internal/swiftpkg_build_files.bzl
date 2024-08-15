@@ -222,7 +222,7 @@ def _clang_target_build_file(repository_ctx, pkg_ctx, target):
             "-fmodule-name={}".format(target.c99name),
         ],
         "tags": ["swift_module={}".format(target.c99name)],
-        "visibility": ["//:__subpackages__"],
+        "visibility": ["//visibility:public"],
     }
 
     def _set_if_not_empty(attr, list, transform_fn = None):
