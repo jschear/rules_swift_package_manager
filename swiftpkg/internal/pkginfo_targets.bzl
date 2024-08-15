@@ -7,7 +7,11 @@ _modulemap_suffix = "_modulemap"
 _resource_bundle_suffix = "_resource_bundle"
 _objc_resource_bundle_accessor_hdr_suffix = "_objc_resource_bundle_accessor_hdr"
 _objc_resource_bundle_accessor_impl_suffix = "_objc_resource_bundle_accessor_impl"
-_resource_bundle_accessor_suffix = "_resource_bundle_accessor"
+# Workaround for assumptions in rules_ios. It iterates through each string in srcs to
+# group the sources by type, but it's perfectly legal to put a target reference that
+# generates source files in srcs, like this target. Making the target's name end in `.swift`
+# makes rules_ios pass it through to the underlying swift_library.
+_resource_bundle_accessor_suffix = "_resource_bundle_accessor.swift"
 _resource_bundle_infoplist_suffix = "_resource_bundle_infoplist"
 
 def _get(targets, name, fail_if_not_found = True):

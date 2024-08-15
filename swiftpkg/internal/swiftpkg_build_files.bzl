@@ -85,8 +85,8 @@ def _swift_target_build_file(pkg_ctx, target):
 
     # Check if any of the sources indicate that the module will be used by
     # Objective-C code. If so, generate the bridge header file.
-    if target.swift_src_info.has_objc_directive and is_library_target:
-        attrs["generates_header"] = True
+    # if target.swift_src_info.has_objc_directive and is_library_target:
+        # attrs["generates_header"] = True
 
     if target.swift_settings != None:
         if len(target.swift_settings.defines) > 0:
@@ -119,8 +119,13 @@ def _swift_target_build_file(pkg_ctx, target):
     if res_build_file:
         all_build_files.append(res_build_file)
     if is_library_target:
-        load_stmts = [swift_library_load_stmt]
-        decls = [_swift_library_from_target(target, attrs)]
+        # load_stmts = [swift_library_load_stmt]
+        # decls = [_swift_library_from_target(target, attrs)]
+
+        # Square patch: generate a sq_apple_framework instead of a swift_library.
+        load_stmts = [sq_apple_framework_load_stmt]
+        decls = [_sq_apple_framework_from_target(target, attrs)]
+
     elif target.type == target_types.executable:
         load_stmts = [swift_binary_load_stmt]
         decls = [_swift_binary_from_target(target, attrs)]
@@ -155,6 +160,13 @@ def _swift_library_from_target(target, attrs):
 
     return build_decls.new(
         kind = swift_kinds.library,
+        name = pkginfo_targets.bazel_label_name(target),
+        attrs = attrs,
+    )
+
+def _sq_apple_framework_from_target(target, attrs):
+    return build_decls.new(
+        kind = swift_kinds.sq_apple_framework,
         name = pkginfo_targets.bazel_label_name(target),
         attrs = attrs,
     )
@@ -757,6 +769,7 @@ def _swift_binary_from_product(product, dep_target, repo_name):
 # MARK: - Constants and API Definition
 
 swift_location = "@build_bazel_rules_swift//swift:swift.bzl"
+sq_framework_location = "@register//tools/rules:framework.bzl"
 
 swift_kinds = struct(
     library = "swift_library",
@@ -765,6 +778,8 @@ swift_kinds = struct(
     test = "swift_test",
     c_module = "swift_c_module",
     compiler_plugin = "swift_compiler_plugin",
+
+    sq_apple_framework = "sq_apple_framework",
 )
 
 swift_library_load_stmt = load_statements.new(
@@ -793,6 +808,11 @@ swift_compiler_plugin_load_stmt = load_statements.new(
 )
 
 swift_test_load_stmt = load_statements.new(swift_location, swift_kinds.test)
+
+sq_apple_framework_load_stmt = load_statements.new(
+    sq_framework_location,
+    swift_kinds.sq_apple_framework
+)
 
 clang_kinds = struct(
     library = "cc_library",

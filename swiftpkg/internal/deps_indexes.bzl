@@ -219,12 +219,12 @@ def _labels_for_module(module):
         # being able to `@import` modules from other Objective-C modules.
         # See `swiftpkg_build_files.bzl` for more information.
         labels.append(_modulemap_label_for_module(module))
-
-    elif (module.src_type == src_types.swift and
-          module.modulemap_label != None):
-        # If an Objc module wants to @import a Swift module, it will need the
-        # modulemap target.
-        labels.append(module.modulemap_label)
+    # Ignoring modulemap targets for now.
+    # elif (module.src_type == src_types.swift and
+    #       module.modulemap_label != None):
+    #     # If an Objc module wants to @import a Swift module, it will need the
+    #     # modulemap target.
+    #     labels.append(module.modulemap_label)
 
     return labels
 
