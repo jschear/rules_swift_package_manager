@@ -769,6 +769,7 @@ def _swift_binary_from_product(product, dep_target, repo_name):
 # MARK: - Constants and API Definition
 
 swift_location = "@build_bazel_rules_swift//swift:swift.bzl"
+swift_library_group_location = "@rules_swift_package_manager//swiftpkg/square:swift_library_group.bzl"
 sq_framework_location = "@register//tools/rules:framework.bzl"
 
 swift_kinds = struct(
@@ -788,7 +789,7 @@ swift_library_load_stmt = load_statements.new(
 )
 
 swift_library_group_load_stmt = load_statements.new(
-    swift_location,
+    swift_library_group_location,
     swift_kinds.library_group,
 )
 
