@@ -213,12 +213,12 @@ def _labels_for_module(module):
     """
     labels = [module.label]
 
-    if module.src_type == src_types.objc:
+    # if module.src_type == src_types.objc:
         # If the dep is an objc, return the real Objective-C target, not the Swift
         # module alias. This is part of a workaround for Objective-C modules not
         # being able to `@import` modules from other Objective-C modules.
         # See `swiftpkg_build_files.bzl` for more information.
-        labels.append(_modulemap_label_for_module(module))
+    #    labels.append(_modulemap_label_for_module(module))
     # Ignoring modulemap targets for now.
     # elif (module.src_type == src_types.swift and
     #       module.modulemap_label != None):

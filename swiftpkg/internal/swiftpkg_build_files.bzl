@@ -166,7 +166,7 @@ def _swift_library_from_target(target, attrs):
 
 def _sq_apple_framework_from_target(target, attrs):
     return build_decls.new(
-        kind = swift_kinds.sq_apple_framework,
+        kind = register_kinds.sq_apple_framework,
         name = pkginfo_targets.bazel_label_name(target),
         attrs = attrs,
     )
@@ -221,7 +221,7 @@ def _clang_target_build_file(repository_ctx, pkg_ctx, target):
             # Module name
             "-fmodule-name={}".format(target.c99name),
         ],
-        "tags": ["swift_module={}".format(target.c99name)],
+        # "tags": ["swift_module={}".format(target.c99name)],
         "visibility": ["//visibility:public"],
     }
 
@@ -230,10 +230,10 @@ def _clang_target_build_file(repository_ctx, pkg_ctx, target):
             attrs[attr] = transform_fn(list) if transform_fn else list
 
     _set_if_not_empty("deps", deps, bzl_selects.to_starlark)
-    _set_if_not_empty("hdrs", clang_src_info.hdrs)
+    _set_if_not_empty("public_headers", clang_src_info.hdrs)
     _set_if_not_empty("srcs", clang_src_info.srcs)
-    _set_if_not_empty("includes", clang_src_info.public_includes)
-    _set_if_not_empty("textual_hdrs", clang_src_info.textual_hdrs)
+    # _set_if_not_empty("includes", clang_src_info.public_includes)
+    # _set_if_not_empty("textual_hdrs", clang_src_info.textual_hdrs)
 
     res_build_file = _handle_target_resources(
         pkg_ctx,
@@ -254,7 +254,7 @@ def _clang_target_build_file(repository_ctx, pkg_ctx, target):
 
     # The copts may be updated by functions that were executed before this
     # point. Use whatever has been set.
-    copts = attrs.get("copts", [])
+    copts = attrs.pop("copts", [])
 
     local_includes = [
         bzl_selects.new(value = p, kind = _condition_kinds.private_includes)
@@ -325,7 +325,9 @@ def _clang_target_build_file(repository_ctx, pkg_ctx, target):
     # adding a path to a copt or linkeropt.
     ext_repo_path = paths.join("external", repository_ctx.name)
 
-    copts.extend(local_includes)
+    
+
+    # copts.extend(local_includes)
 
     # The `includes` attribute adds includes as -isystem which propagates
     # to cc_XXX that depend upon the library.  Providing includes as -I
@@ -337,7 +339,7 @@ def _clang_target_build_file(repository_ctx, pkg_ctx, target):
         normalized = normalized.replace(" ", "\\ ")
         return "-I{}".format(normalized)
 
-    attrs["copts"] = bzl_selects.to_starlark(
+    attrs["objc_copts"] = bzl_selects.to_starlark(
         copts,
         kind_handlers = {
             _condition_kinds.header_search_path: bzl_selects.new_kind_handler(
@@ -356,8 +358,8 @@ def _clang_target_build_file(repository_ctx, pkg_ctx, target):
     if target.objc_src_info != None:
         # Enable clang module support.
         # https://bazel.build/reference/be/objective-c#objc_library.enable_modules
-        attrs["enable_modules"] = True
-        attrs["module_name"] = target.c99name
+        # attrs["enable_modules"] = True
+        # attrs["module_name"] = target.c99name
 
         sdk_framework_bzl_selects = []
         for sf in target.objc_src_info.builtin_frameworks:
@@ -393,30 +395,36 @@ def _clang_target_build_file(repository_ctx, pkg_ctx, target):
         # See `generate_modulemap.bzl` for details on the modulemap generation.
         # See `//swiftpkg/tests/generate_modulemap_tests` package for a usage
         # example.
-        modulemap_deps = _collect_modulemap_deps(deps)
-        load_stmts = [swiftpkg_generate_modulemap_load_stmt]
-        modulemap_target_name = pkginfo_targets.modulemap_label_name(bzl_target_name)
-        noop_modulemap = clang_src_info.modulemap_path != None
-        modulemap_attrs = {
-            "deps": bzl_selects.to_starlark(modulemap_deps),
-            "hdrs": clang_src_info.hdrs,
-            "module_name": target.c99name,
-            "noop": noop_modulemap,
-            "visibility": ["//:__subpackages__"],
-        }
-        decls = [
-            build_decls.new(objc_kinds.library, bzl_target_name, attrs = attrs),
-            build_decls.new(
-                kind = swiftpkg_kinds.generate_modulemap,
-                name = modulemap_target_name,
-                attrs = modulemap_attrs,
-            ),
-        ]
-    else:
-        load_stmts = []
-        decls = [
-            build_decls.new(clang_kinds.library, bzl_target_name, attrs = attrs),
-        ]
+        # modulemap_deps = _collect_modulemap_deps(deps)
+        # load_stmts = [swiftpkg_generate_modulemap_load_stmt]
+        # modulemap_target_name = pkginfo_targets.modulemap_label_name(bzl_target_name)
+        # noop_modulemap = clang_src_info.modulemap_path != None
+        # modulemap_attrs = {
+        #     "deps": bzl_selects.to_starlark(modulemap_deps),
+        #     "hdrs": clang_src_info.hdrs,
+        #     "module_name": target.c99name,
+        #     "noop": noop_modulemap,
+        #     "visibility": ["//:__subpackages__"],
+        # }
+        # decls = [
+        #     build_decls.new(objc_kinds.library, bzl_target_name, attrs = attrs),
+        #     build_decls.new(
+        #         kind = swiftpkg_kinds.generate_modulemap,
+        #         name = modulemap_target_name,
+        #         attrs = modulemap_attrs,
+        #     ),
+        # ]
+    # else:
+    #     load_stmts = []
+    #     decls = [
+    #         build_decls.new(clang_kinds.library, bzl_target_name, attrs = attrs),
+    #     ]
+    attrs["module_name"] = target.c99name
+
+    load_stmts = [sq_apple_framework_load_stmt]
+    decls = [
+        build_decls.new(register_kinds.sq_apple_framework, bzl_target_name, attrs = attrs),
+    ]
     all_build_files.append(build_files.new(
         load_stmts = load_stmts,
         decls = decls,
@@ -738,6 +746,8 @@ def _library_product_build_file(deps_index_ctx, product):
         for label_info in label_infos
     ]
 
+    # if len(target_labels) > 1:
+    #     fail("More than one target label in a libray product. This is allowed in SPM, but square's fork expects only a single library in practice.")
     if len(target_labels) == 0:
         fail("No targets specified for a library product. name:", product.name)
     return build_files.new(
@@ -772,6 +782,10 @@ swift_location = "@build_bazel_rules_swift//swift:swift.bzl"
 swift_library_group_location = "@rules_swift_package_manager//swiftpkg/square:swift_library_group.bzl"
 sq_framework_location = "@register//tools/rules:framework.bzl"
 
+register_kinds = struct(
+    sq_apple_framework = "sq_apple_framework",
+)
+
 swift_kinds = struct(
     library = "swift_library",
     library_group = "swift_library_group",
@@ -779,8 +793,6 @@ swift_kinds = struct(
     test = "swift_test",
     c_module = "swift_c_module",
     compiler_plugin = "swift_compiler_plugin",
-
-    sq_apple_framework = "sq_apple_framework",
 )
 
 swift_library_load_stmt = load_statements.new(
@@ -812,7 +824,7 @@ swift_test_load_stmt = load_statements.new(swift_location, swift_kinds.test)
 
 sq_apple_framework_load_stmt = load_statements.new(
     sq_framework_location,
-    swift_kinds.sq_apple_framework
+    register_kinds.sq_apple_framework
 )
 
 clang_kinds = struct(
