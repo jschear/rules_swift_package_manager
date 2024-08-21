@@ -324,9 +324,6 @@ def _clang_target_build_file(repository_ctx, pkg_ctx, target):
     # Short path relative to Bazel output base. This is typically used when
     # adding a path to a copt or linkeropt.
     ext_repo_path = paths.join("external", repository_ctx.name)
-
-    
-
     # copts.extend(local_includes)
 
     # The `includes` attribute adds includes as -isystem which propagates
@@ -746,18 +743,36 @@ def _library_product_build_file(deps_index_ctx, product):
         for label_info in label_infos
     ]
 
-    # if len(target_labels) > 1:
-    #     fail("More than one target label in a libray product. This is allowed in SPM, but square's fork expects only a single library in practice.")
+    if product.name == "MarketUIFull":
+        # Workaround for the single product that specifies multiple targets.
+        return build_files.new()
+
+    if len(target_labels) > 1:
+        fail("More than one target label in a library product. This is allowed in SPM, but square's fork expects only a single library in practice. " + product.name)
+    
     if len(target_labels) == 0:
         fail("No targets specified for a library product. name:", product.name)
+    # return build_files.new(
+    #     load_stmts = [swift_library_group_load_stmt],
+    #     decls = [
+    #         build_decls.new(
+    #             swift_kinds.library_group,
+    #             product.name,
+    #             attrs = {
+    #                 "deps": target_labels,
+    #                 "visibility": ["//visibility:public"],
+    #             },
+    #         ),
+    #     ],
+    # )
     return build_files.new(
-        load_stmts = [swift_library_group_load_stmt],
+        # load_stmts = [swift_library_group_load_stmt],
         decls = [
             build_decls.new(
-                swift_kinds.library_group,
+                "alias",
                 product.name,
                 attrs = {
-                    "deps": target_labels,
+                    "actual": target_labels[0],
                     "visibility": ["//visibility:public"],
                 },
             ),
