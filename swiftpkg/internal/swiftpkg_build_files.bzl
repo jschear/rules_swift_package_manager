@@ -348,7 +348,7 @@ def _clang_target_build_file(repository_ctx, pkg_ctx, target):
         },
     )
 
-    attrs["defines"] = bzl_selects.to_starlark(defines)
+    # attrs["defines"] = bzl_selects.to_starlark(defines)
 
     bzl_target_name = target.label.name
 
