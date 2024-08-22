@@ -104,8 +104,8 @@ def _swift_target_build_file(pkg_ctx, target):
                 copts.append("-enable-experimental-feature")
                 copts.extend(lists.flatten(bzl_selects.new_from_build_setting(bs)))
 
-    if len(defines) > 0:
-        attrs["defines"] = bzl_selects.to_starlark(defines)
+    # if len(defines) > 0:
+    #     attrs["defines"] = bzl_selects.to_starlark(defines)
     if len(copts) > 0:
         attrs["copts"] = bzl_selects.to_starlark(copts)
 
